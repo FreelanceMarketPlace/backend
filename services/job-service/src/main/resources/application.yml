@@ -1,17 +1,2 @@
-spring:
-  application:
-    name: job-service
-
-server:
-  port: 8082
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-
-# spring:
-#   data:
-#     mongodb:
-#       uri: ${MONGODB_URI:mongodb://localhost:27017/nhom611}
+## Deprecated: prefer application.properties to avoid YAML tab/indentation issues.
+## Keep this file empty (comments only) to avoid accidental configuration overrides.
