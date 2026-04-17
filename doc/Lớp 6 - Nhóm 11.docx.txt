@@ -1,0 +1,147 @@
+     BỘ THÔNG TIN VÀ TRUYỀN THÔNG
+ HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG
+                  ----- 🙜🕮 🙜-----
+
+
+
+
+      BÁO CÁO BÀI TẬP LỚN
+PHÁT TRIỂN HỆ THỐNG THƯƠNG MẠI
+            ĐIỆN TỬ
+Chủ đề: Phát triển hệ thống thương mại điện tử kết
+      nối Freelancer và Nhà tuyển dụng
+
+          Giảng viên: Đỗ Quang Hưng
+               Thành viên nhóm:
+         Nguyễn Tuyết Mai Nhóm trưởng
+       Nguyễn Quốc Dương Thành viên
+             Lâm Quốc Tú Thành viên
+         Nguyễn Sơn Tùng Thành viên
+
+
+
+
+                     1
+I. Repository
+
+
+                                   Nhom6_11_TMDT
+
+II. Phân chia công việc
+
+
+                   Thành viên                              Phụ trách
+
+                                          Quản lý job posting:
+                                          - Đăng tin tuyển dụng
+            Nguyễn Quốc Dương             - Quản lý trạng thái tin tuyển dụng
+                                          - Tra cứu và Hiển thị tin tuyển dụng
+                                          - Quản lý ứng tuyển
+
+                                          Xác thực và Phân quyền:
+                                          - Xác thực tài khoản
+                Nguyễn Tuyết Mai          - Quản lý phiên đăng nhập
+                                          - Bảo mật dữ liệu
+                                          - Quản lý hồ sơ cá nhân
+
+                                          Xác thực và Phân quyền:
+                                          - Xác thực tài khoản
+                  Lâm Quốc Tú             - Quản lý phiên đăng nhập
+                                          - Bảo mật dữ liệu
+                                          - Quản lý hồ sơ cá nhân
+
+                                          Quản lý job posting:
+                                          - Đăng tin tuyển dụng
+                Nguyễn Sơn Tùng           - Quản lý trạng thái tin tuyển dụng
+                                          - Tra cứu và Hiển thị tin tuyển dụng
+                                          - Quản lý ứng tuyển
+
+
+
+
+                                      2
+II. Quy tắc làm việc
+
+
+1. Chiến lược phân nhánh (Git Flow)
+
+        Nhánh                Mục đích            Ai được push?          Merge vào đâu?
+
+
+ main                  Code production-ready   Không ai push trực
+                                               tiếp
+
+
+ develop               Tích hợp các feature    Không ai push trực   main (cuối mỗi sprint)
+                                               tiếp
+
+
+ feature/*             Phát triển tính năng mới Thành viên phụ      develop (qua Pull
+                                                trách               Request)
+
+2. Quy tắc đặt tên nhánh
+Cú pháp: <type>/TV<số>-<mô-tả-ngắn-gọn>
+Ví dụ: feature/TV1-auth-jwt-refresh-token | bugfix/TV3-chat-message-not-saved |
+hotfix/TV4-escrow-double-release
+3. Quy ước Commit Message (Conventional Commits)
+Cú pháp: <type>(<scope>): <mô tả ngắn>
+
+        Type                                       Dùng khi
+
+
+ feat             Thêm tính năng mới
+
+
+ fix              Sửa bug
+
+
+ refactor         Tái cấu trúc code, không thay đổi behavior
+
+
+ docs             Cập nhật tài liệu
+
+
+ test             Thêm / sửa test case
+
+
+                                          3
+ chore              Cài dependencies, config, tooling
+
+
+ style              Format code, không thay đổi logic
+
+Ví dụ hợp lệ: feat(auth): add email verification with JWT token
+Nghiêm cấm: "fix bug" | "update" | "done" | "commit cuoi ngay"
+4. Quy tắc Pull Request (PR)
+     •    Tạo PR khi hoàn thành 1 UC hoặc 1 nhóm UC liên quan
+     •    Tối thiểu 1 thành viên khác phải approve trước khi merge
+     •    Không tự merge PR của bản thân
+     •    Resolve hết conflict trước khi request review
+     •    Xóa nhánh feature sau khi merge thành công
+5. Quy tắc Bảo mật Repository
+
+                 ĐƯỢC commit                                NGHIÊM CẤM commit
+
+
+ Source code (*.ts, *.js, ...)                    File .env (mọi môi trường)
+
+
+ Database migrations, Schema SQL                  node_modules/ | dist/ | *.log
+
+
+ Tài liệu .md, Test files                         Credentials, API keys, secrets
+
+
+ File .env.example (có placeholder)               .DS_Store, Thumbs.db
+
+.gitignore bắt buộc tối thiểu: .env | .env.* | node_modules/ | dist/ | *.log | .DS_Store
+6. Xử lý Xung đột Merge Conflict
+     •    Người tạo PR chịu trách nhiệm resolve conflict
+     •    Nếu phức tạp: cặp đôi với người sở hữu code gốc để resolve cùng nhau
+     •    Không được tự ý xóa code của người khác khi resolve — phải thảo luận
+
+
+
+
+                                          4
+

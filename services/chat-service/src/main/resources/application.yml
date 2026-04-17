@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: chat-service
+
+server:
+  port: 8085
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# spring:
+#   data:
+#     mongodb:
+#       uri: ${MONGODB_URI:mongodb://localhost:27017/nhom611}
