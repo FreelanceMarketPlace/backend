@@ -4,6 +4,11 @@
 # Log file
 *.log
 
+# Env files (DO NOT COMMIT)
+.env
+.env.*
+!.env.example
+
 # BlueJ files
 *.ctxt
 
@@ -18,6 +23,25 @@
 *.zip
 *.tar.gz
 *.rar
+
+# Node / frontend artifacts (rule doc)
+node_modules/
+dist/
+
+# Maven / Java build outputs
+target/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local doc extraction cache
+doc/.pdftext/
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*

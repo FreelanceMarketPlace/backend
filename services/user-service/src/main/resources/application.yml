@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: user-service
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# Mongo
+# spring:
+#   data:
+#     mongodb:
+#       uri: ${MONGODB_URI:mongodb://localhost:27017/nhom611}
