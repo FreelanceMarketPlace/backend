@@ -151,3 +151,18 @@ Tài liệu mô tả theo “bảng” và FK; các ràng buộc quan trọng:
 - Thiết kế idempotency cho release escrow (không release 2 lần).
 - Token lifecycle: refresh token hash + revoke; email verify token TTL.
 - Audit/log và notification có schema riêng.
+
+## Quy ước tổ chức source code (quan trọng)
+User yêu cầu: mỗi service tuy là microservice nhưng codebase phải tổ chức giống “monolith Spring Boot” tiêu chuẩn theo layer để dễ đọc và đồng nhất.
+
+Quy ước áp dụng cho TẤT CẢ services:
+- domain/entity/model: các model domain (@Document/@Entity), enums, value objects.
+- repository: Spring Data repositories.
+- service: business logic (không để logic ở controller).
+- controller: REST API.
+- dto/request/response: input/output models + validation.
+- config: security/configuration/properties.
+- exception: custom exceptions + handler (ưu tiên tái sử dụng libs/common nếu phù hợp).
+
+Package gợi ý: com.nhom611.<service>.{domain,repository,service,controller,dto,config,exception}.
+Ghi chú: nếu cần tách theo feature (vd auth), vẫn giữ layer là trục chính (vd com...dto.auth.*, com...service.auth.*), không thay layer bằng feature package.

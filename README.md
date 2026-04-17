@@ -1,43 +1,73 @@
-# backend (multi-service)
+# Nhom6_11 Backend
 
-Backend monorepo theo kiểu multi-module Maven: mỗi folder trong `services/` là một service Spring Boot.
+Monorepo Maven multi-module cho các Spring Boot services.
 
-## Yêu cầu
-- Java 17
-- Docker + Docker Compose
+## Prerequisites
+- Java 17+
+- Maven 3.9+
+- MongoDB (local) hoặc chạy bằng docker-compose (xem infra/)
 
-## Chạy infra (MongoDB + Redis + Kafka)
+## Run infra (optional)
+Nếu dùng docker-compose, vào thư mục repo và chạy:
 
-```bash
-docker compose -f infra/docker-compose.yml up -d
-```
+`docker compose -f infra/docker-compose.yml up -d`
 
-## Build toàn bộ
+## Build
+Build toàn bộ:
 
-```bash
-mvn -q -DskipTests package
-```
+`mvn -DskipTests package`
 
-## Chạy từng service
+## Run user-service
+JWT secret là bắt buộc (HS256) — có thể lấy theo mẫu ở `.env.example`.
 
-Ví dụ chạy User Service:
+Ví dụ chạy nhanh:
 
-```bash
-mvn -pl services/user-service spring-boot:run
-```
+`AUTH_JWT_SECRET='change-me-to-a-long-random-secret-change-me' mvn -pl services/user-service -am spring-boot:run`
 
-Ports mặc định:
-- user-service: 8081
-- job-service: 8082
-- contract-service: 8083
-- payment-service: 8084
-- chat-service: 8085
-- notification-service: 8086
+### Reuse `.env` cho nhiều lần chạy Maven
+Nếu bạn đã tạo `.env` ở root repo, có thể dùng script wrapper để khỏi phải gán biến môi trường mỗi lần:
 
-## Health check
-- `GET /health` (từ module `libs/common`, được scan bởi các service)
-- `GET /actuator/health`
+`./scripts/mvn-env.sh -pl services/user-service -am spring-boot:run`
 
-## Ghi chú
-- Quy tắc làm việc và tóm tắt tài liệu nằm ở `doc/AI_REMINDER.md`.
-- Không commit `.env` / secrets; dùng `.env.example` làm mẫu.
+## Quick test (curl)
+Tạo thư mục tạm để lưu cookie/log:
+
+`mkdir -p .tmp`
+
+Ghi chú khi test bằng Postman:
+- Với các endpoint public như `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout` hãy để **Authorization = No Auth** (đừng gửi `Authorization: Bearer ...`).
+- Chỉ gửi Bearer token cho endpoint cần auth như `GET /me`.
+
+1) Register
+
+`curl -s -X POST http://localhost:8081/auth/register \
+	-H 'Content-Type: application/json' \
+	-d '{"email":"test@example.com","password":"Password123","role":"EMPLOYER"}' | jq`
+
+2) Login (lưu cookie refresh)
+
+`curl -i -s -X POST http://localhost:8081/auth/login \
+	-H 'Content-Type: application/json' \
+	-d '{"email":"test@example.com","password":"Password123"}' \
+	-c .tmp/cookies.txt`
+
+3) Refresh (đọc cookie, nhận access token mới)
+
+`curl -i -s -X POST http://localhost:8081/auth/refresh \
+	-b .tmp/cookies.txt \
+	-c .tmp/cookies.txt`
+
+4) /me (dùng Bearer access token)
+Lấy access token từ response login/refresh rồi gọi:
+
+`curl -s http://localhost:8081/me -H 'Authorization: Bearer <ACCESS_TOKEN>' | jq`
+
+5) Logout (revoke refresh + clear cookie)
+
+`curl -i -s -X POST http://localhost:8081/auth/logout -b .tmp/cookies.txt -c .tmp/cookies.txt`
+
+## Users API (MVP)
+Fetch danh sách users (yêu cầu Bearer access token):
+
+`curl -s 'http://localhost:8081/users?page=0&size=20' -H 'Authorization: Bearer <ACCESS_TOKEN>' | jq`
+
