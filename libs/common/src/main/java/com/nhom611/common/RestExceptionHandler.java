@@ -1,5 +1,7 @@
 package com.nhom611.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,9 +20,11 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
+	private static final Logger log = LoggerFactory.getLogger(RestExceptionHandler.class);
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<ApiError> handleBadJson(HttpMessageNotReadableException ex, WebRequest request) {
+		log.warn("Malformed JSON request at {}: {}", extractPath(request), ex.getMessage());
 		ApiError body = ApiError.of(
 				HttpStatus.BAD_REQUEST.value(),
 				HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -33,6 +37,7 @@ public class RestExceptionHandler {
 
 	@ExceptionHandler({DuplicateKeyException.class, DataIntegrityViolationException.class})
 	public ResponseEntity<ApiError> handleDuplicateKey(Exception ex, WebRequest request) {
+		log.warn("Duplicate resource at {}: {}", extractPath(request), ex.getMessage());
 		ApiError body = ApiError.of(
 				HttpStatus.CONFLICT.value(),
 				HttpStatus.CONFLICT.getReasonPhrase(),
@@ -45,6 +50,7 @@ public class RestExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, WebRequest request) {
+		log.warn("Validation failed at {}: {}", extractPath(request), ex.getMessage());
 		Map<String, Object> details = new LinkedHashMap<>();
 		Map<String, String> fields = new LinkedHashMap<>();
 		for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
@@ -70,6 +76,11 @@ public class RestExceptionHandler {
 		if (status == null) {
 			status = HttpStatus.INTERNAL_SERVER_ERROR;
 		}
+		if (status.is5xxServerError()) {
+			log.error("Server error at {}: {}", extractPath(request), ex.getReason(), ex);
+		} else {
+			log.warn("Request rejected at {}: {} {}", extractPath(request), status.value(), ex.getReason());
+		}
 
 		ApiError body = ApiError.of(
 				status.value(),
@@ -87,6 +98,11 @@ public class RestExceptionHandler {
 		if (status == null) {
 			status = HttpStatus.INTERNAL_SERVER_ERROR;
 		}
+		if (status.is5xxServerError()) {
+			log.error("Error response at {}: {}", extractPath(request), ex.getMessage(), ex);
+		} else {
+			log.warn("Error response at {}: {}", extractPath(request), ex.getMessage());
+		}
 		ApiError body = ApiError.of(
 				status.value(),
 				status.getReasonPhrase(),
@@ -99,6 +115,7 @@ public class RestExceptionHandler {
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiError> handleGeneric(Exception ex, WebRequest request) {
+		log.error("Unexpected error at {}", extractPath(request), ex);
 		ApiError body = ApiError.of(
 				HttpStatus.INTERNAL_SERVER_ERROR.value(),
 				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
