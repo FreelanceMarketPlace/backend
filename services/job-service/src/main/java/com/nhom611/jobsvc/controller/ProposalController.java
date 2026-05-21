@@ -41,7 +41,7 @@ public class    ProposalController {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid token");
         }
-        log.info("Received proposal submit request jobId={}, freelancerId={}, bidAmount={}", jobId, jwt.getSubject(), req.bidAmount());
+        log.info("Received proposal submit request jobId={}, freelancerId={}", jobId, jwt.getSubject());
         ProposalDtos.ProposalResponse response = proposalService.submitProposal(jobId, jwt.getSubject(), req);
         log.info("Proposal submit completed jobId={}, freelancerId={}, proposalId={}", jobId, jwt.getSubject(), response.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -74,7 +74,7 @@ public class    ProposalController {
     }
 
     /**
-     * GET /freelancer/proposals - Get all proposals by freelancer
+     * GET /freelancer/proposals - Get all proposals by freel   ancer
      */
     @GetMapping("/freelancer/proposals")
     public ResponseEntity<Map<String, Object>> getFreelancerProposals(
@@ -99,17 +99,17 @@ public class    ProposalController {
     }
 
     /**
-     * POST /proposals/{proposalId}/accept - Accept a proposal (Employer only)
+     * POST /proposals/{proposalId}/shortlist - Shortlist a proposal (Employer only)
      */
-    @PostMapping("/proposals/{proposalId}/accept")
-    public ResponseEntity<ProposalDtos.ProposalResponse> acceptProposal(
+    @PostMapping("/proposals/{proposalId}/shortlist")
+    public ResponseEntity<ProposalDtos.ProposalResponse> shortlistProposal(
             @PathVariable String proposalId,
             @AuthenticationPrincipal Jwt jwt
     ) {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid token");
         }
-        ProposalDtos.ProposalResponse response = proposalService.acceptProposal(proposalId, jwt.getSubject());
+        ProposalDtos.ProposalResponse response = proposalService.shortlistProposal(proposalId, jwt.getSubject());
         return ResponseEntity.ok(response);
     }
 

@@ -6,7 +6,6 @@ import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 @Document("proposals")
@@ -28,9 +27,9 @@ public class Proposal {
 
     private String jobTitle;
 
-    private BigDecimal bidAmount;
+    private String coverLetter;
 
-    private String message;
+    private Integer estimatedDuration;
 
     @Indexed
     private ProposalStatus status;
@@ -73,20 +72,20 @@ public class Proposal {
         this.jobTitle = jobTitle;
     }
 
-    public BigDecimal getBidAmount() {
-        return bidAmount;
+    public String getCoverLetter() {
+        return coverLetter;
     }
 
-    public void setBidAmount(BigDecimal bidAmount) {
-        this.bidAmount = bidAmount;
+    public void setCoverLetter(String coverLetter) {
+        this.coverLetter = coverLetter;
     }
 
-    public String getMessage() {
-        return message;
+    public Integer getEstimatedDuration() {
+        return estimatedDuration;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setEstimatedDuration(Integer estimatedDuration) {
+        this.estimatedDuration = estimatedDuration;
     }
 
     public ProposalStatus getStatus() {
