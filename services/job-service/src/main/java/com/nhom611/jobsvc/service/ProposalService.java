@@ -34,7 +34,7 @@ public class ProposalService {
      * Submit a proposal for a job
      */
     public ProposalDtos.ProposalResponse submitProposal(String jobId, String freelancerId, ProposalDtos.SubmitProposalRequest req) {
-        log.info("Submitting proposal jobId={}, freelancerId={}, bidAmount={}", jobId, freelancerId, req.bidAmount());
+        log.info("Submitting proposal jobId={}, freelancerId={}", jobId, freelancerId);
         try {
             // Check if job exists and is open
             Job job = jobRepository.findById(jobId)
@@ -54,8 +54,8 @@ public class ProposalService {
             proposal.setJobId(jobId);
             proposal.setFreelancerId(freelancerId);
             proposal.setJobTitle(job.getTitle());
-            proposal.setBidAmount(req.bidAmount());
-            proposal.setMessage(req.message());
+            proposal.setCoverLetter(req.coverLetter());
+            proposal.setEstimatedDuration(req.estimatedDuration());
             proposal.setStatus(ProposalStatus.PENDING);
             proposal.setCreatedAt(Instant.now());
             proposal.setUpdatedAt(Instant.now());
@@ -115,9 +115,9 @@ public class ProposalService {
     }
 
     /**
-     * Accept proposal (employer only)
+     * Shortlist proposal (employer only)
      */
-    public ProposalDtos.ProposalResponse acceptProposal(String proposalId, String employerId) {
+    public ProposalDtos.ProposalResponse shortlistProposal(String proposalId, String employerId) {
         Proposal proposal = proposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proposal not found"));
 
@@ -133,19 +133,10 @@ public class ProposalService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Proposal is not pending");
         }
 
-        // Check if job already has an accepted proposal
-        long acceptedCount = proposalRepository.countByJobIdAndStatus(proposal.getJobId(), ProposalStatus.ACCEPTED);
-        if (acceptedCount > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This job already has an accepted proposal");
-        }
-
-        // Accept this proposal
-        proposal.setStatus(ProposalStatus.ACCEPTED);
+        // Shortlist this proposal; offer will be created in the next step
+        proposal.setStatus(ProposalStatus.SHORTLISTED);
         proposal.setUpdatedAt(Instant.now());
         proposal.setRespondedAt(Instant.now());
-
-        // Reject all other pending proposals for this job
-        rejectOtherPendingProposals(proposal.getJobId(), proposalId);
 
         Proposal saved = proposalRepository.save(proposal);
 
@@ -198,22 +189,15 @@ public class ProposalService {
         proposal.setUpdatedAt(Instant.now());
         Proposal saved = proposalRepository.save(proposal);
 
-        return toResponse(saved);
-    }
+        Job job = jobRepository.findById(proposal.getJobId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
+        if (job.getProposalCount() > 0) {
+            job.setProposalCount(job.getProposalCount() - 1);
+            job.setUpdatedAt(Instant.now());
+            jobRepository.save(job);
+        }
 
-    /**
-     * Helper: reject all other pending proposals for a job
-     */
-    private void rejectOtherPendingProposals(String jobId, String excludeProposalId) {
-        Page<Proposal> others = proposalRepository.findByJobIdAndStatus(jobId, ProposalStatus.PENDING, org.springframework.data.domain.Pageable.unpaged());
-        others.getContent().stream()
-                .filter(p -> !p.getId().equals(excludeProposalId))
-                .forEach(p -> {
-                    p.setStatus(ProposalStatus.REJECTED);
-                    p.setUpdatedAt(Instant.now());
-                    p.setRespondedAt(Instant.now());
-                    proposalRepository.save(p);
-                });
+        return toResponse(saved);
     }
 
     private ProposalDtos.ProposalResponse toResponse(Proposal proposal) {
@@ -222,8 +206,8 @@ public class ProposalService {
                 proposal.getJobId(),
                 proposal.getJobTitle(),
                 proposal.getFreelancerId(),
-                proposal.getBidAmount(),
-                proposal.getMessage(),
+                proposal.getCoverLetter(),
+                proposal.getEstimatedDuration(),
                 proposal.getStatus(),
                 proposal.getCreatedAt(),
                 proposal.getUpdatedAt(),
