@@ -228,7 +228,9 @@ interface OfferResponse {
 4. Review freelancer info, bid, cover letter và rating
 5. Shortlist / Reject proposal
 6. Create Offer từ proposal phù hợp
-7. Chờ freelancer Accept/Decline offer để đi sang Contract
+7. Có thể tạo nhiều offer pending cho các ứng viên shortlist, nhưng chỉ offer đầu tiên được accept mới chốt job
+8. Khi 1 freelancer accept thành công, hệ thống chuyển job sang `IN_PROGRESS` và tự động expire các offer pending còn lại của job đó
+9. Chờ freelancer Accept/Decline offer để đi sang Contract
 
 ---
 
@@ -245,6 +247,7 @@ interface OfferResponse {
 - Timestamps: createdAt, updatedAt, respondedAt (khi employer react)
 - Employer shortlist proposal rồi tạo offer
 - Offer accept → contract sẽ được tạo ở luồng contract
+- Chỉ 1 offer có thể thắng cuộc cho mỗi job; offer accept đầu tiên sẽ khóa job và làm hết hạn các offer pending còn lại
 
 ✅ **UX**
 - Modal forms (cleaner than page navigation)
@@ -275,6 +278,11 @@ Job (employer-owned)
         ├── employerId
         ├── freelancerId
         └── status (PENDING → ACCEPTED/DECLINED/EXPIRED)
+
+Rule xử lý cạnh tranh:
+- Nhiều proposal có thể được shortlist và tạo offer.
+- Chỉ offer ACCEPTED đầu tiên mới được phép chốt job.
+- Các offer PENDING còn lại của cùng job sẽ tự chuyển sang EXPIRED khi job đã được nhận.
 ```
 
 ---
