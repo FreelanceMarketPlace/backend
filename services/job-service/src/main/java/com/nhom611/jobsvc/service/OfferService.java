@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class OfferService {
@@ -45,6 +46,10 @@ public class OfferService {
 
         if (proposal.getStatus() != ProposalStatus.SHORTLISTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Proposal must be shortlisted before creating an offer");
+        }
+
+        if (job.getStatus() != JobStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Job is no longer open for new offers");
         }
 
         if (offerRepository.existsByProposalId(proposalId)) {
@@ -100,15 +105,32 @@ public class OfferService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer is not pending");
         }
 
-        offer.setStatus(OfferStatus.ACCEPTED);
-        offer.setUpdatedAt(Instant.now());
-        offer.setRespondedAt(Instant.now());
-
         Job job = jobRepository.findById(offer.getJobId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
+
+        if (job.getStatus() != JobStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Job has already been filled by another accepted offer");
+        }
+
+        Instant now = Instant.now();
+
+        offer.setStatus(OfferStatus.ACCEPTED);
+        offer.setUpdatedAt(now);
+        offer.setRespondedAt(now);
+
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setUpdatedAt(Instant.now());
+        job.setUpdatedAt(now);
         jobRepository.save(job);
+
+        List<Offer> siblingOffers = offerRepository.findByJobIdAndStatus(offer.getJobId(), OfferStatus.PENDING);
+        for (Offer siblingOffer : siblingOffers) {
+            if (!siblingOffer.getOfferId().equals(offer.getOfferId())) {
+                siblingOffer.setStatus(OfferStatus.EXPIRED);
+                siblingOffer.setUpdatedAt(now);
+                siblingOffer.setRespondedAt(now);
+            }
+        }
+        offerRepository.saveAll(siblingOffers);
 
         return toResponse(offerRepository.save(offer));
     }
