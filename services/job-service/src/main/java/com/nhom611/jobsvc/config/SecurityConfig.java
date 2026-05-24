@@ -33,6 +33,7 @@ public class SecurityConfig {
 
 						// Public browsing
 						.requestMatchers(HttpMethod.GET, "/jobs/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/offers/**").permitAll()
 
 						// Employer-protected actions
 						.requestMatchers(HttpMethod.GET, "/employer/jobs/**").hasRole("EMPLOYER")

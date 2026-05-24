@@ -79,4 +79,9 @@ public class OfferController {
         }
         return ResponseEntity.ok(offerService.declineOffer(offerId, jwt.getSubject()));
     }
+
+    @GetMapping("/offers/{offerId}")
+    public ResponseEntity<OfferDtos.OfferResponse> getOfferById(@PathVariable String offerId) {
+        return ResponseEntity.ok(offerService.getOfferById(offerId));
+    }
 }

@@ -19,6 +19,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.kafka.core.KafkaTemplate;
+import com.nhom611.common.events.OfferAcceptedEvent;
 
 @Service
 public class OfferService {
@@ -26,11 +29,15 @@ public class OfferService {
     private final OfferRepository offerRepository;
     private final ProposalRepository proposalRepository;
     private final JobRepository jobRepository;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    public OfferService(OfferRepository offerRepository, ProposalRepository proposalRepository, JobRepository jobRepository) {
+    public OfferService(OfferRepository offerRepository, ProposalRepository proposalRepository, JobRepository jobRepository, KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
         this.offerRepository = offerRepository;
         this.proposalRepository = proposalRepository;
         this.jobRepository = jobRepository;
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public OfferDtos.OfferResponse createOfferFromProposal(String proposalId, String employerId, OfferDtos.CreateOfferRequest req) {
@@ -132,7 +139,27 @@ public class OfferService {
         }
         offerRepository.saveAll(siblingOffers);
 
-        return toResponse(offerRepository.save(offer));
+        Offer saved = offerRepository.save(offer);
+
+        // Publish OfferAccepted event to Kafka
+        try {
+            OfferAcceptedEvent evt = new OfferAcceptedEvent(
+                    saved.getOfferId(),
+                    saved.getJobId(),
+                    saved.getProposalId(),
+                    saved.getEmployerId(),
+                    saved.getFreelancerId(),
+                    saved.getContractValue() != null ? saved.getContractValue().doubleValue() : 0.0,
+                    saved.getRespondedAt()
+            );
+            String payload = objectMapper.writeValueAsString(evt);
+            kafkaTemplate.send("offer.accepted", saved.getOfferId(), payload);
+        } catch (Exception ex) {
+            // log and continue
+            System.err.println("Failed to publish offer.accepted event: " + ex.getMessage());
+        }
+
+        return toResponse(saved);
     }
 
     public OfferDtos.OfferResponse declineOffer(String offerId, String freelancerId) {
@@ -151,6 +178,12 @@ public class OfferService {
         offer.setUpdatedAt(Instant.now());
         offer.setRespondedAt(Instant.now());
         return toResponse(offerRepository.save(offer));
+    }
+
+    public OfferDtos.OfferResponse getOfferById(String offerId) {
+        Offer offer = offerRepository.findById(offerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found"));
+        return toResponse(offer);
     }
 
     private OfferDtos.OfferResponse toResponse(Offer offer) {
