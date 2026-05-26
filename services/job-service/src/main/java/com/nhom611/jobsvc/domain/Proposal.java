@@ -7,6 +7,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document("proposals")
 @CompoundIndexes({
@@ -39,6 +41,8 @@ public class Proposal {
     private Instant updatedAt;
 
     private Instant respondedAt; // when employer accepted/rejected
+
+    private List<ProposalAttachment> attachments = new ArrayList<>();
 
     public String getId() {
         return id;
@@ -118,5 +122,13 @@ public class Proposal {
 
     public void setRespondedAt(Instant respondedAt) {
         this.respondedAt = respondedAt;
+    }
+
+    public List<ProposalAttachment> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<ProposalAttachment> attachments) {
+        this.attachments = attachments;
     }
 }
