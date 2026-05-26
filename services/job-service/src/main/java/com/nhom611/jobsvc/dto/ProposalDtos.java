@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
+import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ProposalDtos {
@@ -30,7 +31,8 @@ public final class ProposalDtos {
             ProposalStatus status,
             Instant createdAt,
             Instant updatedAt,
-            Instant respondedAt
+            Instant respondedAt,
+            List<ProposalAttachmentResponse> attachments
     ) {
     }
 
@@ -44,7 +46,18 @@ public final class ProposalDtos {
             ProposalStatus status,
             Instant createdAt,
             Instant updatedAt,
-            Instant respondedAt
+            Instant respondedAt,
+            List<ProposalAttachmentResponse> attachments
+    ) {
+    }
+
+    public record ProposalAttachmentResponse(
+            String attachmentId,
+            String fileName,
+            String mimeType,
+            Long fileSize,
+            Instant uploadedAt,
+            String downloadUrl
     ) {
     }
 }

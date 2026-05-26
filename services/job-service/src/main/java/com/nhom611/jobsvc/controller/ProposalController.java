@@ -9,13 +9,20 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.util.MimeTypeUtils;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,17 +39,18 @@ public class    ProposalController {
     /**
      * POST /jobs/{jobId}/proposals - Submit a proposal for a job (Freelancer)
      */
-    @PostMapping("/jobs/{jobId}/proposals")
+    @PostMapping(value = "/jobs/{jobId}/proposals", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProposalDtos.ProposalResponse> submitProposal(
             @PathVariable String jobId,
             @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody ProposalDtos.SubmitProposalRequest req
+            @RequestPart("proposal") @Valid ProposalDtos.SubmitProposalRequest req,
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid token");
         }
         log.info("Received proposal submit request jobId={}, freelancerId={}", jobId, jwt.getSubject());
-        ProposalDtos.ProposalResponse response = proposalService.submitProposal(jobId, jwt.getSubject(), req);
+        ProposalDtos.ProposalResponse response = proposalService.submitProposal(jobId, jwt.getSubject(), req, attachments);
         log.info("Proposal submit completed jobId={}, freelancerId={}, proposalId={}", jobId, jwt.getSubject(), response.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -141,5 +149,27 @@ public class    ProposalController {
         }
         ProposalDtos.ProposalResponse response = proposalService.withdrawProposal(proposalId, jwt.getSubject());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/proposals/{proposalId}/attachments/{attachmentId}/download")
+    public ResponseEntity<ByteArrayResource> downloadAttachment(
+            @PathVariable String proposalId,
+            @PathVariable String attachmentId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        if (jwt == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid token");
+        }
+
+        var storedFile = proposalService.downloadStoredAttachment(proposalId, attachmentId, jwt.getSubject());
+        var resource = new ByteArrayResource(storedFile.content());
+        String contentType = storedFile.contentType() == null ? MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE : storedFile.contentType();
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(storedFile.content().length)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(storedFile.fileName(), StandardCharsets.UTF_8).build().toString())
+                .body(resource);
     }
 }
