@@ -3,22 +3,23 @@ package com.nhom611.jobsvc.controller;
 import com.nhom611.jobsvc.domain.ProposalStatus;
 import com.nhom611.jobsvc.dto.ProposalDtos;
 import com.nhom611.jobsvc.service.ProposalService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import jakarta.validation.Valid;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.MimeTypeUtils;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
@@ -26,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-public class    ProposalController {
+public class ProposalController {
 
     private static final Logger log = LoggerFactory.getLogger(ProposalController.class);
 
@@ -44,15 +45,31 @@ public class    ProposalController {
             @PathVariable String jobId,
             @AuthenticationPrincipal Jwt jwt,
             @RequestPart("proposal") @Valid ProposalDtos.SubmitProposalRequest req,
-            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments,
+            HttpServletRequest request
     ) {
         if (jwt == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid token");
         }
-        log.info("Received proposal submit request jobId={}, freelancerId={}", jobId, jwt.getSubject());
-        ProposalDtos.ProposalResponse response = proposalService.submitProposal(jobId, jwt.getSubject(), req, attachments);
+        String clientIp = resolveClientIp(request);
+        log.info("Received proposal submit request jobId={}, freelancerId={}, clientIp={}", jobId, jwt.getSubject(), clientIp);
+        ProposalDtos.ProposalResponse response = proposalService.submitProposal(jobId, jwt.getSubject(), req, attachments, clientIp);
         log.info("Proposal submit completed jobId={}, freelancerId={}, proposalId={}", jobId, jwt.getSubject(), response.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+
+        return request.getRemoteAddr();
     }
 
     /**
