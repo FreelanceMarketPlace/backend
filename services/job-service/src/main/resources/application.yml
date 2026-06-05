@@ -8,6 +8,11 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/nhom611_job}
       auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
   servlet:
     multipart:
       max-file-size: 20MB

@@ -42,19 +42,24 @@ public class ProposalService {
     private final ProposalRepository proposalRepository;
     private final JobRepository jobRepository;
     private final ProposalFileStorageService proposalFileStorageService;
+    private final ProposalRateLimitService proposalRateLimitService;
 
-    public ProposalService(ProposalRepository proposalRepository, JobRepository jobRepository, ProposalFileStorageService proposalFileStorageService) {
+    public ProposalService(ProposalRepository proposalRepository, JobRepository jobRepository, ProposalFileStorageService proposalFileStorageService, ProposalRateLimitService proposalRateLimitService) {
         this.proposalRepository = proposalRepository;
         this.jobRepository = jobRepository;
         this.proposalFileStorageService = proposalFileStorageService;
+        this.proposalRateLimitService = proposalRateLimitService;
     }
 
     /**
      * Submit a proposal for a job
      */
-    public ProposalDtos.ProposalResponse submitProposal(String jobId, String freelancerId, ProposalDtos.SubmitProposalRequest req, List<MultipartFile> files) {
-        log.info("Submitting proposal jobId={}, freelancerId={}", jobId, freelancerId);
+    public ProposalDtos.ProposalResponse submitProposal(String jobId, String freelancerId, ProposalDtos.SubmitProposalRequest req, List<MultipartFile> files, String clientIp) {
+        log.info("Submitting proposal jobId={}, freelancerId={}, clientIp={}", jobId, freelancerId, clientIp);
         try {
+            proposalRateLimitService.enforceClientIpLimit(clientIp);
+            proposalRateLimitService.enforceFreelancerLimit(freelancerId);
+
             // Check if job exists and is open
             Job job = jobRepository.findById(jobId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
