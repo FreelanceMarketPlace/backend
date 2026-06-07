@@ -1,6 +1,9 @@
 spring:
   application:
     name: payment-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/nhom611}
 
 server:
   port: 8084
@@ -10,10 +13,4 @@ management:
     web:
       exposure:
         include: health,info
-
-# spring:
-#   data:
 #     mongodb:
-#       uri: ${MONGODB_URI:mongodb://localhost:27017/nhom611}
-#   kafka:
-#     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
